@@ -1,0 +1,155 @@
+<!-- components/stages/training.html -->
+
+<!-- 손실함수 블록 (필수) -->
+<div class="block block-train block-required" id="block-loss" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            손실 함수
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="loss_method">손실 함수</label>
+            <select name="loss_method" id="loss_method" required>
+                <option value="CrossEntropy" {% if form_state.loss_method == 'CrossEntropy' %}selected{% endif %}>Cross Entropy</option>
+                <option value="MSE" {% if form_state.loss_method == 'MSE' %}selected{% endif %}>Mean Squared Error</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- 옵티마이저 블록 (필수) -->
+<div class="block block-train block-required" id="block-optimizer" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            옵티마이저
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="optimizer_method">옵티마이저</label>
+            <select name="optimizer_method" id="optimizer_method" required>
+                <option value="Adam" {% if form_state.optimizer_method == 'Adam' %}selected{% endif %}>Adam</option>
+                <option value="SGD" {% if form_state.optimizer_method == 'SGD' %}selected{% endif %}>SGD</option>
+                <option value="RMSprop" {% if form_state.optimizer_method == 'RMSprop' %}selected{% endif %}>RMSprop</option>
+            </select>
+        </div>
+        
+        <div class="block-field">
+            <label for="learning_rate">학습률</label>
+            <input type="number" name="learning_rate" id="learning_rate" 
+                   value="{{ form_state.learning_rate|default(0.001) }}" 
+                   min="0.000001" max="1" step="0.0001" required>
+        </div>
+        
+        <div class="conditional-field {% if form_state.optimizer_method != 'SGD' %}hidden{% endif %}" id="sgd-params">
+            <div class="block-field">
+                <label for="momentum">모멘텀</label>
+                <input type="number" name="momentum" id="momentum" 
+                       value="{{ form_state.momentum|default(0.9) }}" 
+                       min="0" max="1" step="0.1">
+            </div>
+        </div>
+        
+        <div class="block-field">
+            <label for="weight_decay">Weight Decay</label>
+            <input type="number" name="weight_decay" id="weight_decay" 
+                   value="{{ form_state.weight_decay|default(0) }}" 
+                   min="0" max="0.1" step="0.0001">
+        </div>
+    </div>
+</div>
+
+<!-- 학습 설정 블록 (필수) -->
+<div class="block block-train block-required" id="block-training-config" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            학습 설정
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="epochs">에폭 수</label>
+            <input type="number" name="epochs" id="epochs" 
+                   value="{{ form_state.epochs|default(10) }}" 
+                   min="1" max="1000" required>
+        </div>
+        
+        <div class="block-field">
+            <label for="batch_size">배치 크기</label>
+            <input type="number" name="batch_size" id="batch_size" 
+                   value="{{ form_state.batch_size|default(64) }}" 
+                   min="1" max="512" required>
+        </div>
+        
+        <div class="checkbox-item">
+            <input type="checkbox" name="shuffle" id="shuffle" 
+                   {% if form_state.shuffle != 'false' %}checked{% endif %}>
+            <label for="shuffle">데이터 셔플링</label>
+        </div>
+        
+        <div class="block-field">
+            <label for="seed">랜덤 시드</label>
+            <input type="number" name="seed" id="seed" 
+                   value="{{ form_state.seed|default(42) }}" 
+                   min="0">
+        </div>
+    </div>
+</div>
+
+<!-- Early Stopping 블록 -->
+<div class="block block-train" id="block-early-stopping" data-active="{% if form_state.patience %}true{% else %}false{% endif %}">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            Early Stopping
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="patience">Patience</label>
+            <input type="number" name="patience" id="patience" 
+                   value="{{ form_state.patience|default(3) }}" 
+                   min="0" max="50">
+            <p class="help-text">0으로 설정하면 Early Stopping을 사용하지 않습니다.</p>
+        </div>
+    </div>
+</div>
+
+<!-- 학습률 스케줄러 블록 -->
+<div class="block block-train" id="block-scheduler" data-active="{% if form_state.sched_type %}true{% else %}false{% endif %}">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            학습률 스케줄러
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="sched_type">스케줄러 종류</label>
+            <select name="sched_type" id="sched_type">
+                <option value="">없음</option>
+                <option value="step" {% if form_state.sched_type == 'step' %}selected{% endif %}>Step LR</option>
+                <option value="cosine" {% if form_state.sched_type == 'cosine' %}selected{% endif %}>Cosine Annealing</option>
+            </select>
+        </div>
+        
+        <div class="conditional-field {% if form_state.sched_type != 'step' %}hidden{% endif %}" id="step-params">
+            <div class="block-field">
+                <label for="sched_step">Step 크기</label>
+                <input type="number" name="sched_step" id="sched_step" 
+                       value="{{ form_state.sched_step|default(5) }}" 
+                       min="1" max="100">
+            </div>
+            <div class="block-field">
+                <label for="sched_gamma">감소 비율</label>
+                <input type="number" name="sched_gamma" id="sched_gamma" 
+                       value="{{ form_state.sched_gamma|default(0.5) }}" 
+                       min="0.01" max="1" step="0.01">
+            </div>
+        </div>
+    </div>
+</div>

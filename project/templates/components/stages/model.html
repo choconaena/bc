@@ -1,0 +1,215 @@
+<!-- components/stages/model.html -->
+
+<!-- 입력층 블록 (필수) -->
+<div class="block block-model block-required" id="block-input" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            입력층 설정
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="inline-fields">
+            <div class="block-field">
+                <label for="input_w">너비</label>
+                <input type="number" name="input_w" id="input_w" value="{{ form_state.input_w|default(28) }}" min="1" max="512" required>
+            </div>
+            <div class="block-field">
+                <label for="input_h">높이</label>
+                <input type="number" name="input_h" id="input_h" value="{{ form_state.input_h|default(28) }}" min="1" max="512" required>
+            </div>
+            <div class="block-field">
+                <label for="input_c">채널</label>
+                <input type="number" name="input_c" id="input_c" value="{{ form_state.input_c|default(1) }}" min="1" max="3" required>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conv1 블록 (필수) -->
+<div class="block block-model block-required" id="block-conv1" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            Convolution Layer 1
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="conv1_filters">필터 수</label>
+            <input type="number" name="conv1_filters" id="conv1_filters" value="{{ form_state.conv1_filters|default(32) }}" min="1" max="512" required>
+        </div>
+        
+        <div class="inline-fields">
+            <div class="block-field">
+                <label for="conv1_kernel">커널 크기</label>
+                <input type="number" name="conv1_kernel" id="conv1_kernel" value="{{ form_state.conv1_kernel|default(3) }}" min="1" max="11" step="2">
+            </div>
+            <div class="block-field">
+                <label for="conv1_stride">스트라이드</label>
+                <input type="number" name="conv1_stride" id="conv1_stride" value="{{ form_state.conv1_stride|default(1) }}" min="1" max="3">
+            </div>
+        </div>
+        
+        <div class="block-field">
+            <label for="conv1_padding">패딩</label>
+            <select name="conv1_padding" id="conv1_padding">
+                <option value="same" {% if form_state.conv1_padding == 'same' %}selected{% endif %}>Same</option>
+                <option value="valid" {% if form_state.conv1_padding == 'valid' %}selected{% endif %}>Valid</option>
+            </select>
+        </div>
+        
+        <div class="block-field">
+            <label for="conv1_activation">활성 함수</label>
+            <select name="conv1_activation" id="conv1_activation">
+                <option value="relu" {% if form_state.conv1_activation == 'relu' %}selected{% endif %}>ReLU</option>
+                <option value="tanh" {% if form_state.conv1_activation == 'tanh' %}selected{% endif %}>Tanh</option>
+                <option value="sigmoid" {% if form_state.conv1_activation == 'sigmoid' %}selected{% endif %}>Sigmoid</option>
+                <option value="none" {% if form_state.conv1_activation == 'none' %}selected{% endif %}>없음</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Pooling1 블록 -->
+<div class="block block-model" id="block-pool1" data-active="{% if form_state.pool1_type %}true{% else %}false{% endif %}">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            Pooling Layer 1
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="pool1_type">풀링 종류</label>
+            <select name="pool1_type" id="pool1_type">
+                <option value="">없음</option>
+                <option value="max" {% if form_state.pool1_type == 'max' %}selected{% endif %}>Max Pooling</option>
+                <option value="avg" {% if form_state.pool1_type == 'avg' %}selected{% endif %}>Average Pooling</option>
+            </select>
+        </div>
+        
+        <div class="inline-fields">
+            <div class="block-field">
+                <label for="pool1_size">크기</label>
+                <input type="number" name="pool1_size" id="pool1_size" value="{{ form_state.pool1_size|default(2) }}" min="2" max="5">
+            </div>
+            <div class="block-field">
+                <label for="pool1_stride">스트라이드</label>
+                <input type="number" name="pool1_stride" id="pool1_stride" value="{{ form_state.pool1_stride|default(2) }}" min="1" max="5">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conv2 블록 (선택) -->
+<div class="block block-model" id="block-conv2" data-active="{% if form_state.use_conv2 %}true{% else %}false{% endif %}">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            Convolution Layer 2
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="checkbox-item">
+            <input type="checkbox" name="use_conv2" id="use_conv2" {% if form_state.use_conv2 %}checked{% endif %}>
+            <label for="use_conv2">Conv2 레이어 사용</label>
+        </div>
+        
+        <div class="conditional-field {% if not form_state.use_conv2 %}hidden{% endif %}">
+            <div class="block-field">
+                <label for="conv2_filters">필터 수</label>
+                <input type="number" name="conv2_filters" id="conv2_filters" value="{{ form_state.conv2_filters|default(64) }}" min="1" max="512">
+            </div>
+            
+            <div class="block-field">
+                <label for="conv2_kernel">커널 크기</label>
+                <input type="number" name="conv2_kernel" id="conv2_kernel" value="{{ form_state.conv2_kernel|default(3) }}" min="1" max="11" step="2">
+            </div>
+            
+            <div class="block-field">
+                <label for="conv2_activation">활성 함수</label>
+                <select name="conv2_activation" id="conv2_activation">
+                    <option value="relu" {% if form_state.conv2_activation == 'relu' %}selected{% endif %}>ReLU</option>
+                    <option value="tanh" {% if form_state.conv2_activation == 'tanh' %}selected{% endif %}>Tanh</option>
+                    <option value="sigmoid" {% if form_state.conv2_activation == 'sigmoid' %}selected{% endif %}>Sigmoid</option>
+                    <option value="none" {% if form_state.conv2_activation == 'none' %}selected{% endif %}>없음</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dropout 블록 -->
+<div class="block block-model" id="block-dropout" data-active="{% if form_state.use_dropout %}true{% else %}false{% endif %}">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            Dropout
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="checkbox-item">
+            <input type="checkbox" name="use_dropout" id="use_dropout" {% if form_state.use_dropout %}checked{% endif %}>
+            <label for="use_dropout">Dropout 사용</label>
+        </div>
+        
+        <div class="conditional-field {% if not form_state.use_dropout %}hidden{% endif %}">
+            <div class="block-field">
+                <label for="dropout_p">Dropout 비율</label>
+                <input type="number" name="dropout_p" id="dropout_p" value="{{ form_state.dropout_p|default(0.25) }}" min="0" max="0.9" step="0.05">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dense 블록 (필수) -->
+<div class="block block-model block-required" id="block-dense" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            Fully Connected Layer
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="dense_units">유닛 수</label>
+            <input type="number" name="dense_units" id="dense_units" value="{{ form_state.dense_units|default(128) }}" min="1" max="2048" required>
+        </div>
+        
+        <div class="block-field">
+            <label for="dense_activation">활성 함수</label>
+            <select name="dense_activation" id="dense_activation">
+                <option value="relu" {% if form_state.dense_activation == 'relu' %}selected{% endif %}>ReLU</option>
+                <option value="tanh" {% if form_state.dense_activation == 'tanh' %}selected{% endif %}>Tanh</option>
+                <option value="sigmoid" {% if form_state.dense_activation == 'sigmoid' %}selected{% endif %}>Sigmoid</option>
+                <option value="none" {% if form_state.dense_activation == 'none' %}selected{% endif %}>없음</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Output 블록 (필수) -->
+<div class="block block-model block-required" id="block-output" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            출력층
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="num_classes">클래스 수</label>
+            <input type="number" name="num_classes" id="num_classes" value="{{ form_state.num_classes|default(10) }}" min="2" max="1000" required>
+        </div>
+        
+        <div class="block-field">
+            <label for="output_activation">출력 활성화</label>
+            <select name="output_activation" id="output_activation">
+                <option value="softmax" {% if form_state.output_activation == 'softmax' %}selected{% endif %}>Softmax</option>
+                <option value="sigmoid" {% if form_state.output_activation == 'sigmoid' %}selected{% endif %}>Sigmoid</option>
+                <option value="none" {% if form_state.output_activation == 'none' %}selected{% endif %}>없음</option>
+            </select>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,155 @@
+<!-- components/stages/evaluation.html -->
+
+<!-- 평가 메트릭 블록 (필수) -->
+<div class="block block-eval block-required" id="block-metrics" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            평가 메트릭
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="metrics" value="accuracy" id="metric_accuracy" 
+                       {% if 'accuracy' in form_state.metrics|default(['accuracy']) %}checked{% endif %}>
+                <label for="metric_accuracy">Accuracy</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="metrics" value="precision" id="metric_precision"
+                       {% if 'precision' in form_state.metrics|default([]) %}checked{% endif %}>
+                <label for="metric_precision">Precision</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="metrics" value="recall" id="metric_recall"
+                       {% if 'recall' in form_state.metrics|default([]) %}checked{% endif %}>
+                <label for="metric_recall">Recall</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="metrics" value="f1" id="metric_f1"
+                       {% if 'f1' in form_state.metrics|default([]) %}checked{% endif %}>
+                <label for="metric_f1">F1-Score</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="metrics" value="topk" id="metric_topk"
+                       {% if 'topk' in form_state.metrics|default([]) %}checked{% endif %}>
+                <label for="metric_topk">Top-K Accuracy</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="metrics" value="auc" id="metric_auc"
+                       {% if 'auc' in form_state.metrics|default([]) %}checked{% endif %}>
+                <label for="metric_auc">AUC (이진분류)</label>
+            </div>
+        </div>
+        
+        <div class="conditional-field {% if 'topk' not in form_state.metrics|default([]) %}hidden{% endif %}" id="topk-params">
+            <div class="block-field">
+                <label for="topk_k">K 값</label>
+                <input type="number" name="topk_k" id="topk_k" 
+                       value="{{ form_state.topk_k|default(3) }}" 
+                       min="1" max="10">
+            </div>
+        </div>
+        
+        <div class="conditional-field {% if 'precision' not in form_state.metrics|default([]) and 'recall' not in form_state.metrics|default([]) and 'f1' not in form_state.metrics|default([]) %}hidden{% endif %}" id="average-params">
+            <div class="block-field">
+                <label for="average">평균 방식</label>
+                <select name="average" id="average">
+                    <option value="macro" {% if form_state.average == 'macro' %}selected{% endif %}>Macro</option>
+                    <option value="micro" {% if form_state.average == 'micro' %}selected{% endif %}>Micro</option>
+                    <option value="weighted" {% if form_state.average == 'weighted' %}selected{% endif %}>Weighted</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 분류 리포트 블록 -->
+<div class="block block-eval" id="block-reports" data-active="{% if form_state.show_classification_report or form_state.show_confusion_matrix %}true{% else %}false{% endif %}">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            분석 리포트
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="checkbox-item">
+            <input type="checkbox" name="show_classification_report" id="show_classification_report"
+                   {% if form_state.show_classification_report %}checked{% endif %}>
+            <label for="show_classification_report">분류 리포트 출력</label>
+        </div>
+        
+        <div class="checkbox-item">
+            <input type="checkbox" name="show_confusion_matrix" id="show_confusion_matrix"
+                   {% if form_state.show_confusion_matrix %}checked{% endif %}>
+            <label for="show_confusion_matrix">혼동 행렬 출력</label>
+        </div>
+        
+        <div class="conditional-field {% if not form_state.show_confusion_matrix %}hidden{% endif %}" id="cm-params">
+            <div class="checkbox-item">
+                <input type="checkbox" name="cm_normalize" id="cm_normalize"
+                       {% if form_state.cm_normalize %}checked{% endif %}>
+                <label for="cm_normalize">혼동 행렬 정규화</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 시각화 블록 -->
+<div class="block block-eval" id="block-visualization" data-active="{% if form_state.viz_samples or form_state.viz_mis %}true{% else %}false{% endif %}">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            결과 시각화
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="viz_samples">예측 샘플 수</label>
+            <input type="number" name="viz_samples" id="viz_samples" 
+                   value="{{ form_state.viz_samples|default(0) }}" 
+                   min="0" max="50">
+            <p class="help-text">0으로 설정하면 시각화하지 않습니다.</p>
+        </div>
+        
+        <div class="block-field">
+            <label for="viz_mis">오분류 샘플 수</label>
+            <input type="number" name="viz_mis" id="viz_mis" 
+                   value="{{ form_state.viz_mis|default(0) }}" 
+                   min="0" max="50">
+            <p class="help-text">잘못 분류된 샘플을 시각화합니다.</p>
+        </div>
+    </div>
+</div>
+
+<!-- 평가 설정 블록 -->
+<div class="block block-eval" id="block-eval-config" data-active="true">
+    <div class="block-header">
+        <span class="block-title">
+            <span class="block-status"></span>
+            평가 설정
+        </span>
+    </div>
+    <div class="block-content">
+        <div class="block-field">
+            <label for="eval_batch">배치 크기</label>
+            <input type="number" name="eval_batch" id="eval_batch" 
+                   value="{{ form_state.eval_batch|default(128) }}" 
+                   min="1" max="512">
+        </div>
+        
+        <div class="block-field">
+            <label for="class_names">클래스 이름</label>
+            <input type="text" name="class_names" id="class_names" 
+                   value="{{ form_state.class_names|default('') }}" 
+                   placeholder="예: cat,dog,bird (쉼표로 구분)">
+            <p class="help-text">비워두면 0,1,2... 형식으로 표시됩니다.</p>
+        </div>
+        
+        <div class="checkbox-item">
+            <input type="checkbox" name="force_cpu" id="force_cpu"
+                   {% if form_state.force_cpu %}checked{% endif %}>
+            <label for="force_cpu">CPU 강제 사용</label>
+        </div>
+    </div>
+</div>
