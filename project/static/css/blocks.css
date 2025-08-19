@@ -1,0 +1,195 @@
+/* ===== 블록 스타일 ===== */
+
+.block {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+
+.block:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+/* 블록 헤더 */
+.block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.block-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.block-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-success);
+    transition: var(--transition);
+}
+
+/* 블록 상태 */
+.block[data-active="false"] {
+    opacity: 0.6;
+    background: var(--color-bg-secondary);
+}
+
+.block[data-active="false"] .block-status {
+    background: var(--color-text-secondary);
+}
+
+.block[data-active="false"] input,
+.block[data-active="false"] select,
+.block[data-active="false"] textarea {
+    background: var(--color-bg-secondary);
+    cursor: not-allowed;
+}
+
+/* 필수 블록 */
+.block-required {
+    border-color: var(--color-success);
+    background: linear-gradient(135deg, white 0%, #f0fdf4 100%);
+}
+
+.block-required::before {
+    content: "필수";
+    position: absolute;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+    padding: 2px 6px;
+    background: var(--color-success);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+}
+
+.block-required[data-active="false"] {
+    opacity: 1;
+    cursor: default;
+}
+
+/* 블록 카테고리별 색상 */
+.block-pre {
+    border-left: 3px solid var(--color-pre);
+}
+
+.block-model {
+    border-left: 3px solid var(--color-model);
+}
+
+.block-train {
+    border-left: 3px solid var(--color-train);
+}
+
+.block-eval {
+    border-left: 3px solid var(--color-eval);
+}
+
+/* 블록 내부 컨텐츠 */
+.block-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.block-field {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.block-field label {
+    min-width: 80px;
+    margin: 0;
+}
+
+.block-field input[type="text"],
+.block-field input[type="number"],
+.block-field select {
+    flex: 1;
+}
+
+/* 체크박스 그룹 */
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin: 0;
+}
+
+.checkbox-item label {
+    margin: 0;
+    font-weight: normal;
+}
+
+/* 조건부 필드 */
+.conditional-field {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.conditional-field.hidden {
+    display: none;
+}
+
+/* 블록 토글 애니메이션 */
+@keyframes blockActivate {
+    0% {
+        transform: scale(0.98);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.block[data-active="true"] {
+    animation: blockActivate 0.3s ease;
+}
+
+/* 도움말 텍스트 */
+.help-text {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+}
+
+/* 인라인 필드 */
+.inline-fields {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.inline-fields > * {
+    flex: 1;
+}

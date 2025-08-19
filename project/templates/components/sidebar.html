@@ -1,0 +1,59 @@
+<form id="pipeline-form" method="post" action="/convert">
+    <!-- 스테이지 탭 -->
+    <div class="stage-tabs">
+        <button type="button" class="stage-tab active" data-stage="pre">
+            <span class="stage-icon">🟩</span> 전처리
+        </button>
+        <button type="button" class="stage-tab" data-stage="model">
+            <span class="stage-icon">🟦</span> 모델
+        </button>
+        <button type="button" class="stage-tab" data-stage="train">
+            <span class="stage-icon">🟧</span> 학습
+        </button>
+        <button type="button" class="stage-tab" data-stage="eval">
+            <span class="stage-icon">🟥</span> 평가
+        </button>
+    </div>
+    
+    <!-- 스테이지 패널들 -->
+    <div class="stage-panels">
+        <!-- 전처리 패널 -->
+        <div class="stage-panel active" data-stage-panel="pre">
+            {% include 'components/stages/preprocessing.html' %}
+        </div>
+        
+        <!-- 모델 패널 -->
+        <div class="stage-panel" data-stage-panel="model">
+            {% include 'components/stages/model.html' %}
+        </div>
+        
+        <!-- 학습 패널 -->
+        <div class="stage-panel" data-stage-panel="train">
+            {% include 'components/stages/training.html' %}
+        </div>
+        
+        <!-- 평가 패널 -->
+        <div class="stage-panel" data-stage-panel="eval">
+            {% include 'components/stages/evaluation.html' %}
+        </div>
+    </div>
+    
+    <!-- 액션 버튼 -->
+    <div class="action-buttons">
+        <button type="submit" class="btn btn-primary" name="stage" value="pre">
+            🟩 전처리 변환
+        </button>
+        <button type="submit" class="btn btn-primary" name="stage" value="model">
+            🟦 모델 변환
+        </button>
+        <button type="submit" class="btn btn-primary" name="stage" value="train">
+            🟧 학습 변환
+        </button>
+        <button type="submit" class="btn btn-primary" name="stage" value="eval">
+            🟥 평가 변환
+        </button>
+        <button type="submit" class="btn btn-success" name="stage" value="all">
+            🔗 전체 변환
+        </button>
+    </div>
+</form>

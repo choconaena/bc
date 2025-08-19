@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI 블록코딩{% endblock %}</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/blocks.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            {% block sidebar %}{% endblock %}
+        </aside>
+        
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <!-- 탭 헤더 -->
+            <nav class="tab-header">
+                <button class="tab-btn active" data-tab="code">
+                    <span class="tab-icon">📝</span> 코드
+                </button>
+                <button class="tab-btn" data-tab="data">
+                    <span class="tab-icon">📊</span> 데이터
+                </button>
+                <button class="tab-btn" data-tab="log">
+                    <span class="tab-icon">📋</span> 로그
+                </button>
+            </nav>
+            
+            <!-- 탭 콘텐츠 -->
+            <div class="tab-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <!-- 상태 데이터 -->
+    <script id="app-state" type="application/json">
+        {{ form_state|default({})|tojson|safe }}
+    </script>
+    
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/state.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/blocks.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/tabs.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/data.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/logs.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

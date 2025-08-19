@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}AI 블록코딩 - 홈{% endblock %}
+
+{% block sidebar %}
+    {% include 'components/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+    <!-- 코드 패널 -->
+    <div class="tab-panel active" data-panel="code">
+        {% include 'components/code_panel.html' %}
+    </div>
+    
+    <!-- 데이터 패널 -->
+    <div class="tab-panel" data-panel="data">
+        {% include 'components/data_panel.html' %}
+    </div>
+    
+    <!-- 로그 패널 -->
+    <div class="tab-panel" data-panel="log">
+        {% include 'components/log_panel.html' %}
+    </div>
+{% endblock %}
