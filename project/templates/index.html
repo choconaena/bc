@@ -1,24 +1,1357 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 블록코딩 - 완전 통합 버전</title>
+    
+    <style>
+        /* ===== CSS 변수 정의 ===== */
+        :root {
+            --color-primary: #2563eb;
+            --color-success: #16a34a;
+            --color-warning: #ea580c;
+            --color-danger: #dc2626;
+            --color-info: #0891b2;
+            
+            --color-pre: #4ade80;
+            --color-model: #60a5fa;
+            --color-train: #fb923c;
+            --color-eval: #f87171;
+            
+            --color-bg: #ffffff;
+            --color-bg-secondary: #f8fafc;
+            --color-border: #e2e8f0;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            
+            --transition: all 0.2s ease;
+        }
 
-{% block title %}AI 블록코딩 - 홈{% endblock %}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block sidebar %}
-    {% include 'components/sidebar.html' %}
-{% endblock %}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--color-text);
+            background: var(--color-bg);
+        }
 
-{% block content %}
-    <!-- 코드 패널 -->
-    <div class="tab-panel active" data-panel="code">
-        {% include 'components/code_panel.html' %}
+        /* 레이아웃 */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: var(--color-bg-secondary);
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 탭 헤더 */
+        .tab-header {
+            display: flex;
+            background: var(--color-bg);
+            border-bottom: 1px solid var(--color-border);
+            padding: 0 var(--spacing-md);
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover {
+            color: var(--color-text);
+            background: var(--color-bg-secondary);
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        /* 탭 콘텐츠 */
+        .tab-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-panel {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* 스테이지 탭 */
+        .stage-tabs {
+            display: flex;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm);
+            background: white;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stage-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .stage-tab:hover {
+            background: white;
+            color: var(--color-text);
+        }
+
+        .stage-tab.active {
+            background: white;
+            color: var(--color-text);
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stage-tab.active[data-stage="pre"] {
+            border-color: var(--color-pre);
+            color: var(--color-pre);
+        }
+
+        .stage-tab.active[data-stage="model"] {
+            border-color: var(--color-model);
+            color: var(--color-model);
+        }
+
+        .stage-tab.active[data-stage="train"] {
+            border-color: var(--color-train);
+            color: var(--color-train);
+        }
+
+        .stage-tab.active[data-stage="eval"] {
+            border-color: var(--color-eval);
+            color: var(--color-eval);
+        }
+
+        /* 스테이지 패널 */
+        .stage-panels {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+
+        .stage-panel {
+            display: none;
+        }
+
+        .stage-panel.active {
+            display: block;
+        }
+
+        /* 블록 스타일 */
+        .block {
+            margin-bottom: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .block:hover {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .block-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .block-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-success);
+            transition: var(--transition);
+        }
+
+        .block-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .block-field {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .block-field label {
+            min-width: 120px;
+            margin: 0;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .block-field input[type="text"],
+        .block-field input[type="number"],
+        .block-field select {
+            flex: 1;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+        }
+
+        /* 조건부 필드 */
+        .conditional-field {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .conditional-field.hidden {
+            display: none !important;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 체크박스 */
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        /* 버튼 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--color-bg-secondary);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        /* 액션 버튼 */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background: white;
+            border-radius: var(--radius-md);
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+        }
+
+        /* 코드 뷰어 */
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            background: white;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .code-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .code-view {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            max-height: calc(100vh - 200px);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* 로그 뷰어 */
+        .log-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .log-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            background: white;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .log-viewer {
+            flex: 1;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: var(--spacing-md);
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+
+        .log-line {
+            margin-bottom: 2px;
+        }
+
+        .log-line.error {
+            color: #f87171;
+        }
+
+        .log-line.success {
+            color: #4ade80;
+        }
+
+        .log-line.info {
+            color: #60a5fa;
+        }
+
+        .log-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: white;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-text-secondary);
+        }
+
+        .status-indicator.running .status-dot {
+            background: var(--color-success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+            text-align: center;
+            min-height: 300px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+
+        .inline-fields {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .inline-fields > * {
+            flex: 1;
+        }
+
+        /* 카테고리별 색상 */
+        .block-pre { border-left: 3px solid var(--color-pre); }
+        .block-model { border-left: 3px solid var(--color-model); }
+        .block-train { border-left: 3px solid var(--color-train); }
+        .block-eval { border-left: 3px solid var(--color-eval); }
+
+        /* 스테이지별 버튼 색상 */
+        .btn-stage-pre { background: var(--color-pre); color: white; }
+        .btn-stage-model { background: var(--color-model); color: white; }
+        .btn-stage-train { background: var(--color-train); color: white; }
+        .btn-stage-eval { background: var(--color-eval); color: white; }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <form id="pipeline-form" method="post" action="/convert">
+                <!-- 스테이지 탭 -->
+                <div class="stage-tabs">
+                    <button type="button" class="stage-tab active" data-stage="pre">
+                        <span>🟩</span> 전처리
+                    </button>
+                    <button type="button" class="stage-tab" data-stage="model">
+                        <span>🟦</span> 모델
+                    </button>
+                    <button type="button" class="stage-tab" data-stage="train">
+                        <span>🟧</span> 학습
+                    </button>
+                    <button type="button" class="stage-tab" data-stage="eval">
+                        <span>🟥</span> 평가
+                    </button>
+                </div>
+                
+                <!-- 스테이지 패널들 -->
+                <div class="stage-panels">
+                    <!-- 전처리 패널 -->
+                    <div class="stage-panel active" data-stage-panel="pre">
+                        <!-- 데이터 선택 블록 -->
+                        <div class="block block-pre">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    데이터 선택
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="dataset">훈련 데이터</label>
+                                    <select name="dataset" id="dataset" required>
+                                        <option value="">선택...</option>
+                                        {% for opt in options %}
+                                        <option value="{{ opt }}" {% if form_state.dataset == opt %}selected{% endif %}>{{ opt }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="block-field">
+                                    <label for="is_test">테스트 데이터</label>
+                                    <select name="is_test" id="is_test">
+                                        <option value="false" {% if form_state.is_test != 'true' %}selected{% endif %}>자동 분할</option>
+                                        <option value="true" {% if form_state.is_test == 'true' %}selected{% endif %}>별도 파일</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="test-div" class="conditional-field {% if form_state.is_test != 'true' %}hidden{% endif %}">
+                                    <div class="block-field">
+                                        <label for="testdataset">테스트 파일</label>
+                                        <select name="testdataset" id="testdataset">
+                                            <option value="">선택...</option>
+                                            {% for opt in options %}
+                                            <option value="{{ opt }}" {% if form_state.testdataset == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div id="ratio-div" class="conditional-field {% if form_state.is_test == 'true' %}hidden{% endif %}">
+                                    <div class="block-field">
+                                        <label for="a">훈련 비율(%)</label>
+                                        <input type="number" name="a" id="a" value="{{ form_state.a|default(80) }}" min="10" max="90" step="5">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 결측치 제거 블록 -->
+                        <div class="block block-pre">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    결측치 제거
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="drop_na" id="drop_na" {% if form_state.drop_na %}checked{% endif %}>
+                                    <label for="drop_na">결측치가 있는 행 제거</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- X/y 분리 블록 -->
+                        <div class="block block-pre">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    입력/라벨 분리
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="split_xy" id="split_xy" {% if form_state.split_xy %}checked{% endif %}>
+                                    <label for="split_xy">X(입력)와 y(라벨) 분리</label>
+                                </div>
+                                <p class="help-text">첫 번째 열을 라벨로, 나머지를 입력으로 분리합니다.</p>
+                            </div>
+                        </div>
+
+                        <!-- 이미지 리사이즈 블록 -->
+                        <div class="block block-pre">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    이미지 크기 조정
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="resize_n">크기 (n×n)</label>
+                                    <input type="number" name="resize_n" id="resize_n" value="{{ form_state.resize_n|default(28) }}" min="8" max="256" step="8">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 정규화 블록 -->
+                        <div class="block block-pre">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    정규화
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="normalize">정규화 방법</label>
+                                    <select name="normalize" id="normalize">
+                                        <option value="">없음</option>
+                                        <option value="0-1" {% if form_state.normalize == '0-1' %}selected{% endif %}>[0, 1] 범위</option>
+                                        <option value="-1-1" {% if form_state.normalize == '-1-1' %}selected{% endif %}>[-1, 1] 범위</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 모델 패널 -->
+                    <div class="stage-panel" data-stage-panel="model">
+                        <!-- 입력층 블록 -->
+                        <div class="block block-model">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    입력층 설정
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="inline-fields">
+                                    <div class="block-field">
+                                        <label for="input_w">너비</label>
+                                        <input type="number" name="input_w" id="input_w" value="{{ form_state.input_w|default(28) }}" min="1" max="512">
+                                    </div>
+                                    <div class="block-field">
+                                        <label for="input_h">높이</label>
+                                        <input type="number" name="input_h" id="input_h" value="{{ form_state.input_h|default(28) }}" min="1" max="512">
+                                    </div>
+                                    <div class="block-field">
+                                        <label for="input_c">채널</label>
+                                        <input type="number" name="input_c" id="input_c" value="{{ form_state.input_c|default(1) }}" min="1" max="3">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conv1 블록 -->
+                        <div class="block block-model">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    Convolution Layer 1
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="conv1_filters">필터 수</label>
+                                    <input type="number" name="conv1_filters" id="conv1_filters" value="{{ form_state.conv1_filters|default(32) }}" min="1" max="512">
+                                </div>
+                                <div class="block-field">
+                                    <label for="conv1_kernel">커널 크기</label>
+                                    <input type="number" name="conv1_kernel" id="conv1_kernel" value="{{ form_state.conv1_kernel|default(3) }}" min="1" max="11" step="2">
+                                </div>
+                                <div class="block-field">
+                                    <label for="conv1_padding">패딩</label>
+                                    <select name="conv1_padding" id="conv1_padding">
+                                        <option value="same" {% if form_state.conv1_padding == 'same' %}selected{% endif %}>Same</option>
+                                        <option value="valid" {% if form_state.conv1_padding == 'valid' %}selected{% endif %}>Valid</option>
+                                    </select>
+                                </div>
+                                <div class="block-field">
+                                    <label for="conv1_activation">활성 함수</label>
+                                    <select name="conv1_activation" id="conv1_activation">
+                                        <option value="relu" {% if form_state.conv1_activation == 'relu' %}selected{% endif %}>ReLU</option>
+                                        <option value="tanh" {% if form_state.conv1_activation == 'tanh' %}selected{% endif %}>Tanh</option>
+                                        <option value="sigmoid" {% if form_state.conv1_activation == 'sigmoid' %}selected{% endif %}>Sigmoid</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pooling 블록 -->
+                        <div class="block block-model">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    Pooling Layer
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="pool1_type">풀링 종류</label>
+                                    <select name="pool1_type" id="pool1_type">
+                                        <option value="">없음</option>
+                                        <option value="max" {% if form_state.pool1_type == 'max' %}selected{% endif %}>Max Pooling</option>
+                                        <option value="avg" {% if form_state.pool1_type == 'avg' %}selected{% endif %}>Average Pooling</option>
+                                    </select>
+                                </div>
+                                <div class="inline-fields">
+                                    <div class="block-field">
+                                        <label for="pool1_size">크기</label>
+                                        <input type="number" name="pool1_size" id="pool1_size" value="{{ form_state.pool1_size|default(2) }}" min="2" max="5">
+                                    </div>
+                                    <div class="block-field">
+                                        <label for="pool1_stride">스트라이드</label>
+                                        <input type="number" name="pool1_stride" id="pool1_stride" value="{{ form_state.pool1_stride|default(2) }}" min="1" max="5">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dense 블록 -->
+                        <div class="block block-model">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    Fully Connected Layer
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="dense_units">유닛 수</label>
+                                    <input type="number" name="dense_units" id="dense_units" value="{{ form_state.dense_units|default(128) }}" min="1" max="2048">
+                                </div>
+                                <div class="block-field">
+                                    <label for="dense_activation">활성 함수</label>
+                                    <select name="dense_activation" id="dense_activation">
+                                        <option value="relu" {% if form_state.dense_activation == 'relu' %}selected{% endif %}>ReLU</option>
+                                        <option value="tanh" {% if form_state.dense_activation == 'tanh' %}selected{% endif %}>Tanh</option>
+                                        <option value="sigmoid" {% if form_state.dense_activation == 'sigmoid' %}selected{% endif %}>Sigmoid</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Output 블록 -->
+                        <div class="block block-model">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    출력층
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="num_classes">클래스 수</label>
+                                    <input type="number" name="num_classes" id="num_classes" value="{{ form_state.num_classes|default(10) }}" min="2" max="1000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 학습 패널 -->
+                    <div class="stage-panel" data-stage-panel="train">
+                        <!-- 손실함수 블록 -->
+                        <div class="block block-train">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    손실 함수
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="loss_method">손실 함수</label>
+                                    <select name="loss_method" id="loss_method">
+                                        <option value="CrossEntropy" {% if form_state.loss_method == 'CrossEntropy' %}selected{% endif %}>Cross Entropy</option>
+                                        <option value="MSE" {% if form_state.loss_method == 'MSE' %}selected{% endif %}>Mean Squared Error</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 옵티마이저 블록 -->
+                        <div class="block block-train">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    옵티마이저
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="optimizer_method">옵티마이저</label>
+                                    <select name="optimizer_method" id="optimizer_method">
+                                        <option value="Adam" {% if form_state.optimizer_method == 'Adam' %}selected{% endif %}>Adam</option>
+                                        <option value="SGD" {% if form_state.optimizer_method == 'SGD' %}selected{% endif %}>SGD</option>
+                                        <option value="RMSprop" {% if form_state.optimizer_method == 'RMSprop' %}selected{% endif %}>RMSprop</option>
+                                    </select>
+                                </div>
+                                <div class="block-field">
+                                    <label for="learning_rate">학습률</label>
+                                    <input type="number" name="learning_rate" id="learning_rate" value="{{ form_state.learning_rate|default(0.001) }}" min="0.000001" max="1" step="0.0001">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 학습 설정 블록 -->
+                        <div class="block block-train">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    학습 설정
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="block-field">
+                                    <label for="epochs">에폭 수</label>
+                                    <input type="number" name="epochs" id="epochs" value="{{ form_state.epochs|default(10) }}" min="1" max="1000">
+                                </div>
+                                <div class="block-field">
+                                    <label for="batch_size">배치 크기</label>
+                                    <input type="number" name="batch_size" id="batch_size" value="{{ form_state.batch_size|default(64) }}" min="1" max="512">
+                                </div>
+                                <div class="block-field">
+                                    <label for="patience">Early Stopping</label>
+                                    <input type="number" name="patience" id="patience" value="{{ form_state.patience|default(3) }}" min="0" max="50">
+                                    <p class="help-text">0으로 설정하면 사용하지 않습니다</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 평가 패널 -->
+                    <div class="stage-panel" data-stage-panel="eval">
+                        <!-- 평가 메트릭 블록 -->
+                        <div class="block block-eval">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    평가 메트릭
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" name="metrics" value="accuracy" id="metric_accuracy" {% if 'accuracy' in form_state.metrics|default(['accuracy']) %}checked{% endif %}>
+                                        <label for="metric_accuracy">Accuracy</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" name="metrics" value="precision" id="metric_precision" {% if 'precision' in form_state.metrics|default([]) %}checked{% endif %}>
+                                        <label for="metric_precision">Precision</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" name="metrics" value="recall" id="metric_recall" {% if 'recall' in form_state.metrics|default([]) %}checked{% endif %}>
+                                        <label for="metric_recall">Recall</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" name="metrics" value="f1" id="metric_f1" {% if 'f1' in form_state.metrics|default([]) %}checked{% endif %}>
+                                        <label for="metric_f1">F1-Score</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 시각화 블록 -->
+                        <div class="block block-eval">
+                            <div class="block-header">
+                                <span class="block-title">
+                                    <span class="block-status"></span>
+                                    결과 시각화
+                                </span>
+                            </div>
+                            <div class="block-content">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="show_confusion_matrix" id="show_confusion_matrix" {% if form_state.show_confusion_matrix %}checked{% endif %}>
+                                    <label for="show_confusion_matrix">혼동 행렬 출력</label>
+                                </div>
+                                <div class="block-field">
+                                    <label for="viz_samples">예측 샘플 수</label>
+                                    <input type="number" name="viz_samples" id="viz_samples" value="{{ form_state.viz_samples|default(10) }}" min="0" max="50">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 액션 버튼 - 현재 스테이지에 따라 동적으로 표시 -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary" id="generate-btn" name="stage" value="pre">
+                        🟩 전처리 코드 생성
+                    </button>
+                    <button type="submit" class="btn btn-success" name="stage" value="all">
+                        🔗 전체 코드 생성
+                    </button>
+                </div>
+            </form>
+        </aside>
+        
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <!-- 탭 헤더 -->
+            <nav class="tab-header">
+                <button class="tab-btn active" data-tab="code">
+                    <span>📝</span> 코드
+                </button>
+                <button class="tab-btn" data-tab="data">
+                    <span>📊</span> 데이터
+                </button>
+                <button class="tab-btn" data-tab="log">
+                    <span>📋</span> 로그
+                </button>
+            </nav>
+            
+            <!-- 탭 콘텐츠 -->
+            <div class="tab-content">
+                <!-- 코드 패널 -->
+                <div class="tab-panel active" data-panel="code">
+                    <div class="code-header">
+                        <h3 id="code-title">전처리 코드</h3>
+                        <div class="code-actions">
+                            <button class="btn btn-secondary" onclick="downloadCode()">
+                                📥 다운로드
+                            </button>
+                            <button class="btn btn-primary" onclick="runCode()">
+                                ▶️ 실행
+                            </button>
+                        </div>
+                    </div>
+                    <div id="code-content">
+                        {% if snippet_pre %}
+                        <pre class="code-view">{{ snippet_pre|e }}</pre>
+                        {% else %}
+                        <div class="empty-state">
+                            <h3>코드가 아직 생성되지 않았습니다</h3>
+                            <p>왼쪽 사이드바에서 설정을 완료하고 '생성' 버튼을 클릭하세요.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- 데이터 패널 -->
+                <div class="tab-panel" data-panel="data">
+                    <div class="empty-state">
+                        <h3>데이터 뷰어</h3>
+                        <p>데이터셋 정보를 확인할 수 있습니다.</p>
+                    </div>
+                </div>
+                
+                <!-- 로그 패널 -->
+                <div class="tab-panel" data-panel="log">
+                    <div class="log-container">
+                        <div class="log-controls">
+                            <h3 id="log-title">전처리 로그</h3>
+                            <div>
+                                <button class="btn btn-secondary" onclick="clearLog()">
+                                    🗑️ 지우기
+                                </button>
+                                <button class="btn btn-danger" onclick="stopExecution()">
+                                    ⏹️ 중지
+                                </button>
+                            </div>
+                        </div>
+                        <div class="log-viewer" id="log-viewer">
+                            <div id="log-content"></div>
+                        </div>
+                        <div class="log-status">
+                            <span class="status-indicator" id="status-indicator">
+                                <span class="status-dot"></span>
+                                <span id="status-text">대기 중</span>
+                            </span>
+                            <span>SSE 실시간 로그</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
     
-    <!-- 데이터 패널 -->
-    <div class="tab-panel" data-panel="data">
-        {% include 'components/data_panel.html' %}
-    </div>
-    
-    <!-- 로그 패널 -->
-    <div class="tab-panel" data-panel="log">
-        {% include 'components/log_panel.html' %}
-    </div>
-{% endblock %}
+    <!-- 서버 데이터 (Flask 사용 시) -->
+    <script id="server-data" type="application/json">
+    {
+        "snippets": {
+            "pre": null,
+            "model": null,
+            "train": null,
+            "eval": null
+        }
+    }
+    </script>
+
+    <script>
+        // 전역 상태 관리
+        const AppState = {
+            activeMainTab: 'code',
+            activeStage: 'pre',
+            formData: {},
+            eventSource: null,
+            isRunning: false,
+            snippets: {
+                pre: null,
+                model: null,
+                train: null,
+                eval: null
+            }
+        };
+
+        // 서버에서 받은 스니펫 데이터 로드 (Flask 사용 시)
+        // 템플릿 엔진을 사용하지 않는 경우 이 부분은 제거하거나 
+        // AJAX로 서버에서 데이터를 가져오도록 수정
+        try {
+            // Flask 템플릿 사용 시 서버에서 렌더링된 데이터를 가져오기
+            const serverData = document.getElementById('server-data');
+            if (serverData) {
+                const data = JSON.parse(serverData.textContent);
+                AppState.snippets = data.snippets || AppState.snippets;
+            }
+        } catch (e) {
+            console.log('No server data found, using defaults');
+        }
+
+        // DOM이 로드되면 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            console.log('Initializing app...');
+            
+            // 컴포넌트 초기화
+            initMainTabs();
+            initStageTabs();
+            initConditionalFields();
+            initFormHandlers();
+            
+            console.log('App initialized');
+        }
+
+        // 메인 탭 초기화
+        function initMainTabs() {
+            const tabButtons = document.querySelectorAll('.tab-header .tab-btn');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabName = this.dataset.tab;
+                    switchMainTab(tabName);
+                });
+            });
+        }
+
+        function switchMainTab(tabName) {
+            // 탭 버튼 상태 변경
+            document.querySelectorAll('.tab-header .tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            
+            // 탭 패널 상태 변경
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.toggle('active', panel.dataset.panel === tabName);
+            });
+            
+            AppState.activeMainTab = tabName;
+        }
+
+        // 스테이지 탭 초기화 - 왼쪽 4단계 탭
+        function initStageTabs() {
+            const stageButtons = document.querySelectorAll('.stage-tabs .stage-tab');
+            
+            stageButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const stage = this.dataset.stage;
+                    switchStageTab(stage);
+                });
+            });
+        }
+
+        function switchStageTab(stage) {
+            // 탭 버튼 상태 변경
+            document.querySelectorAll('.stage-tabs .stage-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.stage === stage);
+            });
+            
+            // 스테이지 패널 상태 변경
+            document.querySelectorAll('.stage-panel').forEach(panel => {
+                panel.classList.toggle('active', panel.dataset.stagePanel === stage);
+            });
+            
+            AppState.activeStage = stage;
+            
+            // 생성 버튼 텍스트 업데이트
+            updateGenerateButton(stage);
+            
+            // 코드 뷰 업데이트
+            updateCodeView(stage);
+            
+            // 로그 제목 업데이트
+            updateLogTitle(stage);
+        }
+
+        // 생성 버튼 업데이트
+        function updateGenerateButton(stage) {
+            const btn = document.getElementById('generate-btn');
+            if (btn) {
+                const stageNames = {
+                    'pre': '🟩 전처리',
+                    'model': '🟦 모델',
+                    'train': '🟧 학습',
+                    'eval': '🟥 평가'
+                };
+                btn.textContent = stageNames[stage] + ' 코드 생성';
+                btn.value = stage;
+                btn.className = 'btn btn-stage-' + stage;
+            }
+        }
+
+        // 코드 뷰 업데이트
+        function updateCodeView(stage) {
+            const codeTitle = document.getElementById('code-title');
+            const codeContent = document.getElementById('code-content');
+            
+            const titles = {
+                'pre': '전처리 코드',
+                'model': '모델 코드',
+                'train': '학습 코드',
+                'eval': '평가 코드'
+            };
+            
+            if (codeTitle) {
+                codeTitle.textContent = titles[stage];
+            }
+            
+            if (codeContent) {
+                const snippet = AppState.snippets[stage];
+                if (snippet) {
+                    codeContent.innerHTML = `<pre class="code-view">${escapeHtml(snippet)}</pre>`;
+                } else {
+                    codeContent.innerHTML = `
+                        <div class="empty-state">
+                            <h3>${titles[stage]}가 아직 생성되지 않았습니다</h3>
+                            <p>왼쪽 사이드바에서 설정을 완료하고 '생성' 버튼을 클릭하세요.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // 로그 제목 업데이트
+        function updateLogTitle(stage) {
+            const logTitle = document.getElementById('log-title');
+            const titles = {
+                'pre': '전처리 로그',
+                'model': '모델 로그',
+                'train': '학습 로그',
+                'eval': '평가 로그'
+            };
+            
+            if (logTitle) {
+                logTitle.textContent = titles[stage];
+            }
+        }
+
+        // 조건부 필드 초기화
+        function initConditionalFields() {
+            // 테스트 데이터 사용 여부
+            const isTestSelect = document.getElementById('is_test');
+            if (isTestSelect) {
+                const updateTestFields = function() {
+                    const useTest = isTestSelect.value === 'true';
+                    const testDiv = document.getElementById('test-div');
+                    const ratioDiv = document.getElementById('ratio-div');
+                    
+                    if (testDiv) {
+                        testDiv.classList.toggle('hidden', !useTest);
+                    }
+                    
+                    if (ratioDiv) {
+                        ratioDiv.classList.toggle('hidden', useTest);
+                    }
+                };
+                
+                isTestSelect.addEventListener('change', updateTestFields);
+                updateTestFields(); // 초기 상태 설정
+            }
+        }
+
+        // 폼 핸들러 초기화
+        function initFormHandlers() {
+            const form = document.getElementById('pipeline-form');
+            
+            if (form) {
+                // 폼 제출 처리
+                form.addEventListener('submit', function(e) {
+                    // 기본 동작 유지 (서버로 전송)
+                    console.log('Form submitted with stage:', e.submitter?.value);
+                });
+                
+                // 폼 입력 변경 감지
+                form.addEventListener('change', function(e) {
+                    const { name, value } = e.target;
+                    if (name) {
+                        AppState.formData[name] = value;
+                    }
+                });
+            }
+        }
+
+        // HTML 이스케이프
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 코드 다운로드
+        function downloadCode() {
+            const stage = AppState.activeStage;
+            window.location.href = `/download/${stage}`;
+        }
+
+        // 코드 실행
+        async function runCode() {
+            const stage = AppState.activeStage;
+            
+            // 로그 탭으로 전환
+            switchMainTab('log');
+            
+            // 로그 초기화
+            clearLog();
+            
+            // 상태 업데이트
+            AppState.isRunning = true;
+            updateStatus('running');
+            
+            try {
+                // 실행 요청
+                const response = await fetch(`/run/${stage}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    // SSE 로그 스트리밍 시작
+                    startLogStream(stage);
+                } else {
+                    throw new Error(data.error || '실행 실패');
+                }
+            } catch (error) {
+                appendLog(`오류: ${error.message}`, 'error');
+                AppState.isRunning = false;
+                updateStatus('error');
+            }
+        }
+
+        // SSE 로그 스트리밍
+        function startLogStream(stage) {
+            // 기존 스트림 종료
+            if (AppState.eventSource) {
+                AppState.eventSource.close();
+            }
+            
+            // 새 스트림 시작
+            AppState.eventSource = new EventSource(`/logs/stream?stage=${stage}`);
+            
+            AppState.eventSource.onmessage = function(event) {
+                appendLog(event.data);
+            };
+            
+            AppState.eventSource.onerror = function(error) {
+                console.error('SSE error:', error);
+                stopExecution();
+            };
+        }
+
+        // 로그 추가
+        function appendLog(message, type = 'normal') {
+            const logContent = document.getElementById('log-content');
+            if (logContent) {
+                const logLine = document.createElement('div');
+                logLine.className = 'log-line ' + type;
+                logLine.textContent = message;
+                logContent.appendChild(logLine);
+                
+                // 자동 스크롤
+                const logViewer = document.getElementById('log-viewer');
+                if (logViewer) {
+                    logViewer.scrollTop = logViewer.scrollHeight;
+                }
+            }
+        }
+
+        // 로그 지우기
+        function clearLog() {
+            const logContent = document.getElementById('log-content');
+            if (logContent) {
+                logContent.innerHTML = '';
+            }
+        }
+
+        // 실행 중지
+        function stopExecution() {
+            if (AppState.eventSource) {
+                AppState.eventSource.close();
+                AppState.eventSource = null;
+            }
+            AppState.isRunning = false;
+            updateStatus('stopped');
+            appendLog('실행이 중지되었습니다.', 'info');
+        }
+
+        // 상태 업데이트
+        function updateStatus(status) {
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            if (indicator) {
+                indicator.className = 'status-indicator ' + (status === 'running' ? 'running' : '');
+            }
+            
+            if (statusText) {
+                const texts = {
+                    'running': '실행 중',
+                    'stopped': '중지됨',
+                    'error': '오류',
+                    'idle': '대기 중'
+                };
+                statusText.textContent = texts[status] || '대기 중';
+            }
+        }
+    </script>
+</body>
+</html>

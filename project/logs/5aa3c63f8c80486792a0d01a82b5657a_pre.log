@@ -1,0 +1,13 @@
+[pre][2025-08-20 01:58:22] === PREPROCESSING START ===
+[pre][2025-08-20 01:58:22] START: 데이터 선택/로딩
+[pre][2025-08-20 01:58:22] END  : 데이터 선택/로딩 (elapsed=0.373s)
+[pre][2025-08-20 01:58:22] Train size: 8000, Test size: 2000
+[pre][2025-08-20 01:58:22] SKIP : 결측치 행 삭제
+[pre][2025-08-20 01:58:22] SKIP : 잘못된 라벨 삭제
+[pre][2025-08-20 01:58:22] SKIP : 입력/라벨 분리(X/y)
+[pre][2025-08-20 01:58:22] START: 이미지 크기 변경 -> 24x24
+Traceback (most recent call last):
+  File "/home/bm_ai/bc/project/workspace/5aa3c63f8c80486792a0d01a82b5657a/preprocessing.py", line 54, in <module>
+    images_2d = X_train.reshape(-1, 28, 28).astype(np.uint8)
+                ^^^^^^^
+NameError: name 'X_train' is not defined
